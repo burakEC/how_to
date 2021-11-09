@@ -1,0 +1,46 @@
+# Ubuntu 16.04'de yapılmıştır.
+# Import edilecek sertifika crt uzantılı olarak aşağıdaki gibi /tmp dizinine export edilir.
+echo -n | openssl s_client -connect tlcbitbucket.innova.com.tr:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > /tmp/bitbucket.crt
+# Export edilen crt dosyası test edilir.
+openssl x509 -in /tmp/bitbucket.crt -text
+# Oluşturulan crt dosyası /usr/local/share/ca-certificates dizinine kopyalanır.
+cp /tmp/bitbucket.crt /usr/local/share/ca-certificates
+# update-ca-certificates komutu ile /etc/ssl/certs/ca-certificates.crt dosyası güncellenir.
+update-ca-certificates
+# Güncelleme sonrası sertifika eklendi ise aşağıdaki gibi çıktı görülür.
+root@telcoci:/tmp# update-ca-certificates
+root@telcoci:/usr/local/share/ca-certificates# update-ca-certificates
+Updating certificates in /etc/ssl/certs...
+WARNING: Skipping duplicate certificate ACCVRAIZ1.pem
+WARNING: Skipping duplicate certificate ACCVRAIZ1.pem
+1 added, 0 removed; done.
+Running hooks in /etc/ca-certificates/update.d...
+
+Adding debian:bitbucket.pem
+done.
+done.
+
+# Güncelleme sonrası curl ile ilgili URL'nin hata alıp, almadığı aşağıdaki gibi test edilebilir. 
+root@telcoci:/usr/local/share/ca-certificates# curl -I -v https://tlcbitbucket.innova.com.tr/scm/oim/oim-microservices.git           *   Trying 10.10.10.53...
+* Connected to tlcbitbucket.innova.com.tr (10.10.10.53) port 443 (#0)
+* found 148 certificates in /etc/ssl/certs/ca-certificates.crt
+* found 1035 certificates in /etc/ssl/certs
+* ALPN, offering http/1.1
+* SSL connection using TLS1.2 / ECDHE_RSA_AES_256_GCM_SHA384
+*        server certificate verification OK
+*        server certificate status verification SKIPPED
+*        common name: *.innova.com.tr (matched)
+*        server certificate expiration date OK
+*        server certificate activation date OK
+*        certificate public key: RSA
+*        certificate version: #3
+*        subject: C=TR,postalCode=34450,L=İstanbul,street=ARI TEKNOKENT ARI 4 BINASI\, NO:2- 1 ITU AYAZAGA KAMPUSU,O=Innova Bilisim Cozumleri A.S.,CN=*.innova.com.tr
+*        start date: Thu, 27 Feb 2020 00:00:00 GMT
+*        expire date: Sun, 06 Mar 2022 23:59:59 GMT
+*        issuer: C=GB,ST=Greater Manchester,L=Salford,O=Sectigo Limited,CN=Sectigo RSA Organization Validation Secure Server CA
+*        compression: NULL
+* ALPN, server accepted to use http/1.1
+> HEAD /scm/oim/oim-microservices.git HTTP/1.1
+> Host: tlcbitbucket.innova.com.tr
+> User-Agent: curl/7.47.0
+> Accept: */*
